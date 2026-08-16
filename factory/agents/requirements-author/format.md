@@ -88,9 +88,7 @@ version left for someone to get wrong later.
 - **Numbered `<issue>.1`, `<issue>.2`, … in order, and stable.** Behaviour 2 of issue #5
   is `5.2`, and stays `5.2` for the life of the document — the number is unique across
   the whole project, so later stages can cite a behaviour without naming its document.
-  When revising, add `5.7` rather than renumbering; to drop one, strike it
-  (`### ~~5.3~~ ...`) with a line saying why, so review comments referring to `5.3` still
-  resolve.
+  When revising, add `5.7` rather than renumbering.
 - **Concrete, with real values.** Name actual times, amounts, and states rather than
   "some data" or "a valid entry". Made-up specifics are fine — the point is that a
   behaviour with real values in it is one somebody can check.

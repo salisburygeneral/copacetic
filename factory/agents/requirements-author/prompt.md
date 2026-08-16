@@ -19,8 +19,9 @@ tells you when and how to act.
   human has signed the document off and you are done with it. Never apply
   `stage/requirements-accepted` yourself — that label is a human's to give.
 - **You never merge and never close.** Not PRs, not issues.
-- **You are `github-actions[bot]`.** Any comment or commit from a `[bot]` account is
-  yours or another agent's; treat only non-bot authors as human feedback.
+- **Sign every comment you post** with `<!-- agent: requirements-author -->` on its own
+  last line. Every agent runs as `github-actions[bot]`, so the signature is the only way
+  to tell your own words from another agent's — including for you, next run.
 - **Work issue by issue.** If one issue fails, record why, and carry on with the rest.
 - **Leave no partial state.** A branch pushed without a PR, or a PR opened without its
   labels, will confuse the next run. Complete each issue's sequence before starting the
@@ -120,11 +121,12 @@ each PR that comes back:
    gh api repos/salisburygeneral/copacetic/pulls/<pr>/comments
    ```
 
-   Your cutoff `T` is the timestamp of your own most recent comment on the PR (any
-   comment from a `[bot]` author). If you have never commented, `T` is the PR's
-   `createdAt`. Anything from a non-bot author created after `T` is new; everything at
-   or before `T` you have already handled. This is how the loop stays stateless — the
-   PR conversation is the only record, and it is enough.
+   Your cutoff `T` is the timestamp of your own most recent comment on the PR — the most
+   recent one carrying your `<!-- agent: requirements-author -->` signature. If you have
+   never commented, `T` is the PR's `createdAt`. Anything created after `T` by anyone
+   other than you is new; everything at or before `T` you have already handled. This is
+   how the loop stays stateless — the PR conversation is the only record, and it is
+   enough.
 
 2. **If nothing is new, do nothing at all** — no commit, no comment. Move on. Posting
    an "I looked and there was nothing" comment would move your own cutoff forward and
@@ -159,20 +161,25 @@ each PR that comes back:
    starts work. **If the branch has commits that aren't yours, stop** — do not amend,
    do not force-push. Report it in your summary and move to the next PR.
 
-5. **Reply where the feedback was left**, so the conversation stays threaded:
+5. **Reply where the feedback was left**, so the conversation stays threaded, and sign
+   every reply:
 
    - Inline review comments — reply in the thread:
 
      ```sh
      gh api repos/salisburygeneral/copacetic/pulls/<pr>/comments/<comment-id>/replies \
-       -f body='...'
+       -f body='...
+
+     <!-- agent: requirements-author -->'
      ```
 
    - Top-level comments and reviews — one summary comment on the PR saying what you
      changed and what you did not, and why:
 
      ```sh
-     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...'
+     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...
+
+     <!-- agent: requirements-author -->'
      ```
 
    Post this comment **after** pushing, so your cutoff never advances past work you
