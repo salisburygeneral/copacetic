@@ -49,6 +49,12 @@ keep them short: this file is read in full at the start of every session.
   lost or repeated run costs nothing.
 - **Agents act as `github-actions[bot]`.** PRs opened with that token don't fire other
   workflows — the first thing to change if a stage ever needs to be event-triggered.
+- **A reviewing stage owns no commit.** It asks for every change it wants rather than
+  making any itself, so the stage that authored the work keeps the single commit it can
+  amend.
+- **Agents review with `event: COMMENT`.** Every agent is `github-actions[bot]`, including
+  whoever opened the PR, and GitHub refuses `APPROVE` and `REQUEST_CHANGES` on your own
+  pull request.
 
 ## Stage labels
 
