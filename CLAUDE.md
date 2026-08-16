@@ -29,7 +29,14 @@ keep them short: this file is read in full at the start of every session.
 - **One issue, one branch, one PR, one commit per stage.** An issue gets a single
   `issue/NNN-slug` branch and PR that carries it through every stage, titled after the
   issue. Each agent owns exactly one commit on it and amends that commit in place rather
-  than piling on revisions.
+  than piling on revisions. An agent that finds a commit which isn't its own in the way
+  stops rather than rewriting another stage's work.
+- **Agents sign their comments.** Every comment an agent posts ends with
+  `<!-- agent: <name> -->`, and an agent's cutoff for new feedback is its own latest
+  signed comment. They all run as `github-actions[bot]`, so without the signature no
+  agent can tell its own words from another's.
+- **`make test` is the one way to run the tests.** CI and the agents call the same
+  target, so a suite that passes for one passes for the other.
 - **Stage labels are the state machine, and mean the stage is done.** An agent's work
   queue is "things missing my label", which makes runs idempotent: an interrupted run
   leaves the label unapplied and gets picked up an hour later.
@@ -43,3 +50,5 @@ keep them short: this file is read in full at the start of every session.
 
 - `stage/requirements-authored` — applied by requirements-author to an issue and its PR
 - `stage/requirements-accepted` — applied by a human to a PR that reads correctly
+- `stage/tests-authored` — applied by test-author to a PR
+- `stage/tests-accepted` — applied by test-reviewer to a PR whose tests are right
