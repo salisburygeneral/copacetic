@@ -37,6 +37,10 @@ keep them short: this file is read in full at the start of every session.
   agent can tell its own words from another's.
 - **`make test` is the one way to run the tests.** CI and the agents call the same
   target, so a suite that passes for one passes for the other.
+- **Acceptance tests are the fixed point.** `Tests/AcceptanceTests/` belongs to
+  test-author and encodes the accepted requirements. Every other stage treats it as
+  read-only: make the code satisfy the tests, never the tests satisfy the code. Other
+  kinds of test go in their own target.
 - **Stage labels are the state machine, and mean the stage is done.** An agent's work
   queue is "things missing my label", which makes runs idempotent: an interrupted run
   leaves the label unapplied and gets picked up an hour later.
