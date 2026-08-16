@@ -34,9 +34,13 @@ the software must do; you decide only how to demonstrate it.
 
 ## What a test looks like
 
+Acceptance tests live in `Tests/AcceptanceTests/`, which is yours alone. Other stages
+write other kinds of test in their own targets; you never write anything outside this
+one, and nothing you write here depends on anything in another test target.
+
 One `@Test` per behaviour, in one file per issue, named after the requirements document
 it mirrors — `requirements/007-log-a-coffee.md` becomes
-`Tests/CopaceticTests/007-log-a-coffee.swift`:
+`Tests/AcceptanceTests/007-log-a-coffee.swift`:
 
 ```swift
 import Testing
@@ -85,8 +89,9 @@ and nothing beyond it:
   behaviour that could accidentally make a test pass. Where a stub already exists, extend
   it rather than declaring a second one.
 - **Create `Package.swift` if it is absent** — tools version 6.0, library target
-  `Copacetic`, test target `CopaceticTests`, no dependencies. Swift Testing ships with
-  the toolchain.
+  `Copacetic`, test target `AcceptanceTests`, no dependencies. Swift Testing ships with
+  the toolchain. Where it already exists, add nothing to it but what your own target
+  needs; the other targets in it belong to other stages.
 - **`make test` must build.** Failing assertions are the expected result; a build error
   is a different thing entirely and is yours to fix before you commit. A test that passes
   the moment you write it is worth a second look — usually it means you have tested
@@ -130,7 +135,7 @@ Work through them in ascending PR number order:
    commit below yours:
 
    ```sh
-   git add Package.swift Sources Tests
+   git add Package.swift Sources Tests/AcceptanceTests
    git commit -m "Add acceptance tests for #NNN: <issue title>"
    git push
    ```
@@ -205,7 +210,7 @@ each PR that comes back:
    git switch -C <head-branch> origin/<head-branch>
    git log -1 --format='%an %s'
    # ...edit the tests, then `make test`...
-   git add Package.swift Sources Tests
+   git add Package.swift Sources Tests/AcceptanceTests
    git commit --amend --no-edit
    git push --force-with-lease
    ```
