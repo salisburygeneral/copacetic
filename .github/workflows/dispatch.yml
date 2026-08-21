@@ -90,4 +90,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-        run: gh workflow run '${{ steps.route.outputs.agent }}.yml'
+        run: |
+          agent='${{ steps.route.outputs.agent }}'
+
+          waiting=$(gh run list --workflow "$agent.yml" --status queued \
+            --limit 1 --json databaseId --jq length)
+          if [ "$waiting" != 0 ]; then
+            echo "$agent already has a run waiting"
+            exit 0
+          fi
+
+          gh workflow run "$agent.yml"
