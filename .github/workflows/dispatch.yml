@@ -1,0 +1,93 @@
+name: dispatch
+
+# Wakes the stage that an event has given work to. An agent reads its whole queue from
+# GitHub, so a dispatch carries no payload — it only says the queue may be non-empty.
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [labeled, synchronize]
+  issue_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Route the event
+        id: route
+        run: |
+          # An issue carries stage labels too, but no agent reads an issue's comments.
+          if [ "$GITHUB_EVENT_NAME" = issue_comment ] &&
+             [ "$(jq -r '.issue.pull_request // ""' "$GITHUB_EVENT_PATH")" = "" ]; then
+            echo "comment on an issue -> none"
+            exit 0
+          fi
+
+          action=$(jq -r .action "$GITHUB_EVENT_PATH")
+          sender=$(jq -r .sender.login "$GITHUB_EVENT_PATH")
+          labels=" $(jq -r '[(.pull_request // .issue).labels[].name] | join(" ")' \
+            "$GITHUB_EVENT_PATH") "
+
+          # The highest label the ladder reaches is the rung the PR is sitting on.
+          rung=
+          for stage in requirements-authored requirements-accepted \
+                       tests-authored tests-accepted \
+                       code-authored code-accepted; do
+            case $labels in *" stage/$stage "*) rung=$stage ;; esac
+          done
+
+          agent=
+          case "$GITHUB_EVENT_NAME:$action" in
+            issues:opened)
+              agent=requirements-author ;;
+
+            # A new label means the stage below it finished.
+            pull_request:labeled)
+              case $(jq -r .label.name "$GITHUB_EVENT_PATH") in
+                stage/requirements-accepted) agent=test-author ;;
+                stage/tests-authored)        agent=test-reviewer ;;
+                stage/tests-accepted)        agent=code-author ;;
+                stage/code-authored)         agent=code-reviewer ;;
+              esac ;;
+
+            # A push is the rung's author answering its reviewer.
+            pull_request:synchronize)
+              case $rung in
+                tests-authored) agent=test-reviewer ;;
+                code-authored)  agent=code-reviewer ;;
+              esac ;;
+
+            # Anything said on a rung under review goes back to the author.
+            issue_comment:created | \
+            pull_request_review:submitted | \
+            pull_request_review_comment:created)
+              case $rung in
+                requirements-authored) agent=requirements-author ;;
+                tests-authored)        agent=test-author ;;
+                code-authored)         agent=code-author ;;
+              esac ;;
+          esac
+
+          if [ "$sender" = "copacetic-$agent[bot]" ]; then
+            agent=
+          fi
+
+          echo "$GITHUB_EVENT_NAME:$action rung=${rung:-none} -> ${agent:-none}"
+          echo "agent=$agent" >> "$GITHUB_OUTPUT"
+
+      - name: Wake the agent
+        if: steps.route.outputs.agent != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run '${{ steps.route.outputs.agent }}.yml'
