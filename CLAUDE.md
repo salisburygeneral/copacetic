@@ -62,6 +62,10 @@ keep them short: this file is read in full at the start of every session.
   the stage above it, a comment or a review wakes the author of the rung under review,
   and a push wakes that rung's reviewer. An event whose sender is the agent it would
   wake is dropped.
+- **Only a queued run stops a dispatch.** A queued run has not read its queue yet, so
+  it will pick up the event's work when it starts. A run in progress may have read past
+  it, so it is no evidence that anything will. One review is several events — the
+  submission and one per inline comment — and this is what collapses them.
 - **A reviewing stage owns no commit.** It asks for every change it wants rather than
   making any itself, so the stage that authored the work keeps the single commit it can
   amend.
