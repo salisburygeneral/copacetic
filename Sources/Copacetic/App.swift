@@ -8,7 +8,8 @@ public struct Device {
     public let network: Network
 
     public init(iOSVersion: Int, network: Network) {
-        fatalError("unimplemented")
+        self.iOSVersion = iOSVersion
+        self.network = network
     }
 }
 
@@ -23,23 +24,24 @@ public struct Screen {
 }
 
 public struct App {
+    private let device: Device
+
     public init(device: Device) {
-        fatalError("unimplemented")
+        self.device = device
     }
 
     public var homeScreenLabel: String {
-        fatalError("unimplemented")
+        "Copacetic"
     }
 
     public mutating func open() -> Screen {
-        fatalError("unimplemented")
+        Screen(elements: [.text("Hello, World!")])
     }
 
     public mutating func leave(for duration: Duration) {
-        fatalError("unimplemented")
     }
 
     public mutating func resume() -> Screen {
-        fatalError("unimplemented")
+        open()
     }
 }
