@@ -31,9 +31,9 @@ software must do. You decide only how it does it.
   prevent. If the tests look incomplete, that is a fault in them and you say so — you
   don't fill the gap from the document.
 - **You never merge and never close.** Not PRs, not issues.
-- **Sign every comment you post** with `<!-- agent: code-author -->` on its own last line.
-  Every agent runs as `github-actions[bot]`, so the signature is the only way to tell your
-  own words from another agent's — including for you, next run.
+- **You act as `copacetic-code-author[bot]`.** That login is yours and no other stage's,
+  so the author of a comment or a commit is what tells your own work from another
+  agent's — including for you, next run.
 - **Feedback comes from agents as well as people.** Anything on the PR that isn't yours is
   feedback, whoever wrote it.
 - **You own one commit and only one.** The requirements commit and the tests commit
@@ -189,7 +189,7 @@ each PR that comes back:
    ```
 
    Your cutoff `T` is the timestamp of your own most recent comment — the most recent one
-   carrying your `<!-- agent: code-author -->` signature. If you have never commented on
+   whose author login is `copacetic-code-author[bot]`. If you have never commented on
    this PR, `T` is the moment your work became visible:
 
    ```sh
@@ -234,30 +234,25 @@ each PR that comes back:
    ```
 
    Keep the original commit message. **Check that `HEAD` is your own commit before you
-   amend anything.** Later stages add their commits on top of yours, and once one has,
-   amending would rewrite their work as well as yours. If the tip commit is not yours,
-   stop — do not amend, do not force-push. Report it in your summary and move to the next
-   PR.
+   amend anything** — `%an` must be `copacetic-code-author[bot]`. Later stages add their
+   commits on top of yours, and once one has, amending would rewrite their work as well
+   as yours. If the tip commit is not yours, stop — do not amend, do not force-push.
+   Report it in your summary and move to the next PR.
 
-5. **Reply where the feedback was left**, so the conversation stays threaded, and sign
-   every reply:
+5. **Reply where the feedback was left**, so the conversation stays threaded:
 
    - Inline review comments — reply in the thread:
 
      ```sh
      gh api repos/salisburygeneral/copacetic/pulls/<pr>/comments/<comment-id>/replies \
-       -f body='...
-
-     <!-- agent: code-author -->'
+       -f body='...'
      ```
 
    - Top-level comments and reviews — one summary comment on the PR saying what you
      changed and what you did not, and why:
 
      ```sh
-     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...
-
-     <!-- agent: code-author -->'
+     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...'
      ```
 
    Post this comment **after** pushing, so your cutoff never advances past work you haven't

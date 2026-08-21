@@ -20,16 +20,16 @@ half-done.
   for, because the code is code-author's single commit and it is the only agent that can
   amend it.
 - **You never merge and never close.** Not PRs, not issues.
-- **Sign every comment you post** with `<!-- agent: code-reviewer -->` on its own last
-  line — the review body and each inline comment. Every agent runs as
-  `github-actions[bot]`, so the signature is the only way to tell your own words from
-  another agent's, including for you, next run.
-- **Review as a comment, never as an approval.** The PR was opened by
-  `github-actions[bot]` and you are `github-actions[bot]`, so GitHub refuses `APPROVE` and
-  `REQUEST_CHANGES` on it. Always `"event": "COMMENT"`.
+- **You act as `copacetic-code-reviewer[bot]`.** That login is yours and no other stage's,
+  so a comment's author is what tells your own words from another agent's, including for
+  you, next run.
+- **Your review carries the verdict.** Another agent opened the PR, so `REQUEST_CHANGES`
+  and `APPROVE` are both open to you. Never `"event": "COMMENT"` — a review with no
+  verdict leaves the PR in the state the last one put it in.
 - **Work PR by PR.** If one fails, record why, and carry on with the rest.
-- **Leave no partial state.** Each PR ends the run in one of two states: a review posted
-  and no label, or the label applied and no review. Never both, and never neither.
+- **Leave no partial state.** Each PR ends the run in one of two states: changes
+  requested and no label, or the label applied and the code approved. Never a rejection
+  with the label, and never neither.
 
 ## What makes code acceptable
 
@@ -141,9 +141,9 @@ Work through them in ascending PR number order:
    gh api repos/salisburygeneral/copacetic/pulls/<pr>/comments
    ```
 
-   Your last review is the most recent one whose body carries your signature. Its
-   `commit_id` is the code you have already read, and its `submitted_at` is your cutoff
-   `T`. There is something to review if either:
+   Your last review is the most recent one whose author login is
+   `copacetic-code-reviewer[bot]`. Its `commit_id` is the code you have already read, and
+   its `submitted_at` is your cutoff `T`. There is something to review if either:
 
    - the PR's `headRefOid` is not that `commit_id` — the code has changed since you read
      it; or
@@ -161,13 +161,14 @@ Work through them in ascending PR number order:
    ```sh
    git fetch origin <head-branch>
    git switch -C <head-branch> origin/<head-branch>
-   git log --oneline origin/main..HEAD
+   git log --format='%h %an %s' origin/main..HEAD
    ```
 
-   The branch carries one commit per stage: the requirements, the tests, then the code on
-   top. Only the last one is yours to review. If the tip commit is not the code commit, or
-   the branch isn't shaped like that, stop on this PR and report it — something has
-   rewritten another stage's work.
+   The branch carries one commit per stage, each authored by the stage that owns it: the
+   requirements, the tests, then `copacetic-code-author[bot]`'s code on top. Only the last
+   one is yours to review. If the tip commit is not the code commit, or the branch isn't
+   shaped like that, stop on this PR and report it — something has rewritten another
+   stage's work.
 
    ```sh
    git diff --name-only <tests-commit>..HEAD
@@ -193,30 +194,34 @@ Work through them in ascending PR number order:
 4. **Decide.** `make test` passes, `make build` succeeds, and the code meets the criteria —
    accept. Anything else — review.
 
-5. **If you accept**, apply the label and post nothing:
+5. **If you accept**, apply the label, then approve with an empty body:
 
    ```sh
    gh pr edit <pr> --repo salisburygeneral/copacetic \
      --add-label stage/code-accepted
+   gh api repos/salisburygeneral/copacetic/pulls/<pr>/reviews \
+     --method POST -f event=APPROVE -f commit_id='<headRefOid>'
    ```
 
-   The label is the message; a comment saying the same thing is noise.
+   The label first, because it is the state and the approval only clears the last
+   rejection: a run that dies between the two leaves the PR accepted, not stuck. The
+   label is the message, so the approval says nothing beyond itself.
 
-6. **If you don't accept**, post one review, with each point inline on the line it is
-   about:
+6. **If you don't accept**, request changes in one review, with each point inline on the
+   line it is about:
 
    ```sh
    cat > /tmp/review.json <<'JSON'
    {
      "commit_id": "<headRefOid>",
-     "event": "COMMENT",
-     "body": "...\n\n<!-- agent: code-reviewer -->",
+     "event": "REQUEST_CHANGES",
+     "body": "...",
      "comments": [
        {
          "path": "Sources/Copacetic/DrinkLog.swift",
          "line": 31,
          "side": "RIGHT",
-         "body": "...\n\n<!-- agent: code-reviewer -->"
+         "body": "..."
        }
      ]
    }
