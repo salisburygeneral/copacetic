@@ -1,0 +1,27 @@
+name: Copacetic
+options:
+  deploymentTarget:
+    iOS: "26.0"
+packages:
+  Copacetic:
+    path: ..
+targets:
+  Copacetic:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Assets.xcassets
+    dependencies:
+      - package: Copacetic
+        product: Copacetic
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${BUNDLE_ID}
+        DEVELOPMENT_TEAM: ${TEAM_ID}
+        INFOPLIST_FILE: Info.plist
+        PRODUCT_MODULE_NAME: CopaceticApp
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CURRENT_PROJECT_VERSION: 1
+        TARGETED_DEVICE_FAMILY: "1"
+    scheme: {}
