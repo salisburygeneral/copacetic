@@ -59,9 +59,9 @@ keep them short: this file is read in full at the start of every session.
 - **`dispatch.yml` wakes the next stage from an event.** A dispatch carries no payload,
   because an agent reads its whole queue from GitHub — it only says the queue may be
   non-empty. The route comes from the stage labels already on the PR: a new label wakes
-  the stage above it, a comment or a review wakes the author of the rung under review,
-  and a push wakes that rung's reviewer. An event whose sender is the agent it would
-  wake is dropped.
+  the stage above it, a push wakes the reviewer of the rung under review, and a comment
+  wakes whichever side of that rung did not write it — so an author that answers a
+  review wakes its reviewer, as the reviewers' own cutoff rule expects.
 - **Only a queued run stops a dispatch.** A queued run has not read its queue yet, so
   it will pick up the event's work when it starts. A run in progress may have read past
   it, so it is no evidence that anything will. One review is several events — the

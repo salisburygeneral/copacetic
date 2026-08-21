@@ -67,15 +67,23 @@ jobs:
                 code-authored)  agent=code-reviewer ;;
               esac ;;
 
-            # Anything said on a rung under review goes back to the author.
+            # A rung under review has two sides, and a comment goes to the one that did
+            # not write it. Requirements are reviewed by a human, who needs no waking.
             issue_comment:created | \
             pull_request_review:submitted | \
             pull_request_review_comment:created)
+              author=
+              reviewer=
               case $rung in
-                requirements-authored) agent=requirements-author ;;
-                tests-authored)        agent=test-author ;;
-                code-authored)         agent=code-author ;;
-              esac ;;
+                requirements-authored) author=requirements-author ;;
+                tests-authored)        author=test-author; reviewer=test-reviewer ;;
+                code-authored)         author=code-author; reviewer=code-reviewer ;;
+              esac
+              if [ "$sender" = "copacetic-$author[bot]" ]; then
+                agent=$reviewer
+              else
+                agent=$author
+              fi ;;
           esac
 
           if [ "$sender" = "copacetic-$agent[bot]" ]; then
