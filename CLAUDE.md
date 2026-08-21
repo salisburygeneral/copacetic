@@ -46,16 +46,22 @@ keep them short: this file is read in full at the start of every session.
   kinds of test go in their own target.
 - **Stage labels are the state machine, and mean the stage is done.** An agent's work
   queue is "things missing my label", which makes runs idempotent: an interrupted run
-  leaves the label unapplied and gets picked up an hour later. An approval can't stand in
+  leaves the label unapplied and gets picked up by the next event or the daily
+  `schedule`, which is the net under `dispatch.yml`. An approval can't stand in
   for a label: GitHub can search `reviewed-by:` but not "approved by", and the aggregate
   `review:approved` flips off when a later stage's reviewer blocks.
 - **Agents are stateless.** Everything needed to decide what to do next is read from
   GitHub — labels, comment timestamps, authorship. No database, no run history, so a
   lost or repeated run costs nothing.
-- **An app token fires workflows, so `ci.yml` runs on factory PRs.** Every PR an agent
-  opens and every commit it pushes triggers it; the token they used before did not. The
-  agent workflows themselves stay on `schedule` and `workflow_dispatch`, so no agent can
-  start another.
+- **An app token fires workflows, so the factory drives itself.** Every PR an agent
+  opens, every commit it pushes and every label it applies triggers `ci.yml` and
+  `dispatch.yml`; the token they used before did not.
+- **`dispatch.yml` wakes the next stage from an event.** A dispatch carries no payload,
+  because an agent reads its whole queue from GitHub — it only says the queue may be
+  non-empty. The route comes from the stage labels already on the PR: a new label wakes
+  the stage above it, a comment or a review wakes the author of the rung under review,
+  and a push wakes that rung's reviewer. An event whose sender is the agent it would
+  wake is dropped.
 - **A reviewing stage owns no commit.** It asks for every change it wants rather than
   making any itself, so the stage that authored the work keeps the single commit it can
   amend.
