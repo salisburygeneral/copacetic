@@ -2,7 +2,8 @@
 
 An AI software factory prototype for building a personal iPhone app. Each factory stage
 is an agent with its own directory under `factory/agents/` and a scheduled workflow in
-`.github/workflows/` that runs it.
+`.github/workflows/` that runs it. The release is the exception: it is deterministic, so
+`release.yml` runs no agent.
 
 **Project preferences go in this file** — conventions, formats, decisions, things to
 always or never do. Add them as they come up, with the reason when it isn't obvious, and
@@ -52,12 +53,22 @@ keep them short: this file is read in full at the start of every session.
 - **A reviewing stage owns no commit.** It asks for every change it wants rather than
   making any itself, so the stage that authored the work keeps the single commit it can
   amend.
-- **The app shell holds no logic.** `Sources/CopaceticApp/` is SwiftUI over `Copacetic`
+- **The app shell holds no logic.** `App/Sources/` is SwiftUI over `Copacetic`
   and nothing else — no target tests it, so every decision it could make belongs in the
   library where the acceptance tests reach it.
 - **Agents review with `event: COMMENT`.** Every agent is `github-actions[bot]`, including
   whoever opened the PR, and GitHub refuses `APPROVE` and `REQUEST_CHANGES` on your own
   pull request.
+- **`App/` is the iPhone app and belongs to code-author.** The Xcode app target compiles
+  the shell, so `Sources/` holds the library alone and SwiftPM never builds the app.
+  `make build` is the one way to build it, as `make test` is the one way to test it.
+- **The bundle identifier and the team ID are the secrets `APP_BUNDLE_ID` and
+  `APPLE_TEAM_ID`.** The repo is public. `App/project.yml` carries `${BUNDLE_ID}` and
+  `${TEAM_ID}` and never a literal.
+- **A merge to `main` ships to TestFlight.** The build number is the workflow run number,
+  which always rises; TestFlight rejects one it has seen.
+- **A merge made with the `github-actions[bot]` token fires no workflow.** A human merge
+  triggers the release today. A merge stage would need a PAT or a GitHub App token.
 
 ## Stage labels
 

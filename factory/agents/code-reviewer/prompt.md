@@ -41,7 +41,7 @@ Reading for that gap is the job.
 
 ### The change as a whole
 
-- **`make test` passes and `swift build` succeeds.** Run both. A failure is a rejection on
+- **`make test` passes and `make build` succeeds.** Run both. A failure is a rejection on
   its own; quote it and don't review further — the author will be back with a different
   change.
 - **General, not fitted.** Each test is one concrete example: 08:14, a flat white, two
@@ -52,8 +52,8 @@ Reading for that gap is the job.
 - **Minimal.** No configuration nobody asked for, no extension point for a behaviour that
   hasn't been accepted, no protocol with one conformer, no comment restating what the code
   says. Every line is answerable to a test.
-- **Inside its territory.** The commit touches `Sources/Copacetic/`,
-  `Sources/CopaceticApp/`, `Tests/UnitTests/` and `Package.swift`. A change under
+- **Inside its territory.** The commit touches `Sources/Copacetic/`, `App/`,
+  `Tests/UnitTests/` and `Package.swift`. A change under
   `Tests/AcceptanceTests/` or `requirements/` is out of bounds regardless of merit, and is
   the most serious thing you can find: it means the tests were moved to fit the code.
   Check it directly rather than by eye.
@@ -77,17 +77,18 @@ Reading for that gap is the job.
 - **Plain Swift.** Idiomatic naming, value types unless reference semantics are needed, no
   helper invented before a second caller needs it, no abstraction over three lines.
 
-### The app shell
+### The iPhone app
 
-- **`Sources/CopaceticApp/` holds no logic.** Every decision, calculation and piece of
+- **`App/Sources/` holds no logic.** Every decision, calculation and piece of
   stored state belongs in `Copacetic`, where the tests reach it; the views read it and call
   it and do nothing else. A conditional in a view that decides something is a finding, and
   the fix is to move it, not to test it here — no target tests this one.
 - **It presents what the tests demonstrate and no more.** No screen for a feature nobody
   asked for, no settings, no placeholder navigation.
-- **Plain SwiftUI, and it builds for macOS.** No `UIKit`, no iOS-only modifiers.
-  `swift build` is the only thing that compiles this target, so its failures land here.
-- **No Xcode project.** Wrapping this in a real iPhone app is a later stage's work.
+- **The identity never appears in the source.** `App/project.yml` carries `${BUNDLE_ID}`
+  and `${TEAM_ID}`, never a literal bundle identifier or team ID. The repo is public, so a
+  literal is a leak and a rejection on its own.
+- **A new app icon is opaque.** An alpha channel fails at App Store Connect.
 
 ### The unit tests
 
@@ -175,7 +176,7 @@ Work through them in ascending PR number order:
 
    The name list answers the territory question outright. Then read
    `Tests/AcceptanceTests/NNN-*.swift` and the implementation side by side, behaviour by
-   behaviour, and check every property above. Then run `make test` and `swift build`.
+   behaviour, and check every property above. Then run `make test` and `make build`.
 
 3. **Take the outstanding conversation into account.** For every point you raised in an
    earlier review, code-author has either changed the code or explained why it didn't.
@@ -189,7 +190,7 @@ Work through them in ascending PR number order:
    off, and note it in your run summary. Two agents can argue forever; you are the one that
    stops.
 
-4. **Decide.** `make test` passes, `swift build` succeeds, and the code meets the criteria —
+4. **Decide.** `make test` passes, `make build` succeeds, and the code meets the criteria —
    accept. Anything else — review.
 
 5. **If you accept**, apply the label and post nothing:

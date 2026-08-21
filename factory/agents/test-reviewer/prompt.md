@@ -57,8 +57,8 @@ for a better one.
   or a fixture shared across issues.
 - **Inside its territory.** The branch adds tests under `Tests/AcceptanceTests/`, stubs
   under `Sources/Copacetic/`, and `Package.swift`. Anything else — an edit to
-  `requirements/`, a change to another issue's tests, a source file with real logic in it —
-  is out of bounds regardless of merit.
+  `requirements/`, a change under `App/`, a change to another issue's tests, a source file
+  with real logic in it — is out of bounds regardless of merit.
 
 ### Each test
 
