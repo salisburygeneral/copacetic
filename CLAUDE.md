@@ -52,6 +52,9 @@ keep them short: this file is read in full at the start of every session.
 - **A reviewing stage owns no commit.** It asks for every change it wants rather than
   making any itself, so the stage that authored the work keeps the single commit it can
   amend.
+- **The app shell holds no logic.** `Sources/CopaceticApp/` is SwiftUI over `Copacetic`
+  and nothing else — no target tests it, so every decision it could make belongs in the
+  library where the acceptance tests reach it.
 - **Agents review with `event: COMMENT`.** Every agent is `github-actions[bot]`, including
   whoever opened the PR, and GitHub refuses `APPROVE` and `REQUEST_CHANGES` on your own
   pull request.
@@ -62,3 +65,5 @@ keep them short: this file is read in full at the start of every session.
 - `stage/requirements-accepted` — applied by a human to a PR that reads correctly
 - `stage/tests-authored` — applied by test-author to a PR
 - `stage/tests-accepted` — applied by test-reviewer to a PR whose tests are right
+- `stage/code-authored` — applied by code-author to a PR
+- `stage/code-accepted` — applied by code-reviewer to a PR whose code is right
