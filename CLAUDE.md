@@ -32,10 +32,12 @@ keep them short: this file is read in full at the start of every session.
   issue. Each agent owns exactly one commit on it and amends that commit in place rather
   than piling on revisions. An agent that finds a commit which isn't its own in the way
   stops rather than rewriting another stage's work.
-- **Agents sign their comments.** Every comment an agent posts ends with
-  `<!-- agent: <name> -->`, and an agent's cutoff for new feedback is its own latest
-  signed comment. They all run as `github-actions[bot]`, so without the signature no
-  agent can tell its own words from another's.
+- **Each agent runs as its own GitHub App.** One app per agent, named after it, installed
+  on this repo alone, with its ID and private key in the `<AGENT>_APP_ID` and
+  `<AGENT>_APP_PRIVATE_KEY` secrets. The bot login is what separates one agent's comments
+  and commits from another's, so nothing is signed and an agent's cutoff for new feedback
+  is its own latest comment. The authoring agents hold `contents: write`, the reviewing
+  ones `contents: read`.
 - **`make test` is the one way to run the tests.** CI and the agents call the same
   target, so a suite that passes for one passes for the other.
 - **Acceptance tests are the fixed point.** `Tests/AcceptanceTests/` belongs to
@@ -44,21 +46,28 @@ keep them short: this file is read in full at the start of every session.
   kinds of test go in their own target.
 - **Stage labels are the state machine, and mean the stage is done.** An agent's work
   queue is "things missing my label", which makes runs idempotent: an interrupted run
-  leaves the label unapplied and gets picked up an hour later.
+  leaves the label unapplied and gets picked up an hour later. An approval can't stand in
+  for a label: GitHub can search `reviewed-by:` but not "approved by", and the aggregate
+  `review:approved` flips off when a later stage's reviewer blocks.
 - **Agents are stateless.** Everything needed to decide what to do next is read from
   GitHub — labels, comment timestamps, authorship. No database, no run history, so a
   lost or repeated run costs nothing.
-- **Agents act as `github-actions[bot]`.** PRs opened with that token don't fire other
-  workflows — the first thing to change if a stage ever needs to be event-triggered.
+- **An app token fires workflows, so `ci.yml` runs on factory PRs.** Every PR an agent
+  opens and every commit it pushes triggers it; the token they used before did not. The
+  agent workflows themselves stay on `schedule` and `workflow_dispatch`, so no agent can
+  start another.
 - **A reviewing stage owns no commit.** It asks for every change it wants rather than
   making any itself, so the stage that authored the work keeps the single commit it can
   amend.
 - **The app shell holds no logic.** `App/Sources/` is SwiftUI over `Copacetic`
   and nothing else — no target tests it, so every decision it could make belongs in the
   library where the acceptance tests reach it.
-- **Agents review with `event: COMMENT`.** Every agent is `github-actions[bot]`, including
-  whoever opened the PR, and GitHub refuses `APPROVE` and `REQUEST_CHANGES` on your own
-  pull request.
+- **A reviewing stage gives a verdict.** All three reviewers work alike, the human at
+  requirements included: `REQUEST_CHANGES` to ask for changes, `APPROVE` to withdraw that
+  block, never `COMMENT`. The reviewer is never the app that opened the PR, so GitHub
+  allows both. Acceptance applies the label first and approves second, because the label
+  is the state and a run that dies between the two leaves the PR accepted rather than
+  stuck.
 - **`App/` is the iPhone app and belongs to code-author.** The Xcode app target compiles
   the shell, so `Sources/` holds the library alone and SwiftPM never builds the app.
   `make build` is the one way to build it, as `make test` is the one way to test it.
@@ -67,8 +76,8 @@ keep them short: this file is read in full at the start of every session.
   `${TEAM_ID}` and never a literal.
 - **A merge to `main` ships to TestFlight.** The build number is the workflow run number,
   which always rises; TestFlight rejects one it has seen.
-- **A merge made with the `github-actions[bot]` token fires no workflow.** A human merge
-  triggers the release today. A merge stage would need a PAT or a GitHub App token.
+- **A human merge triggers the release today.** No agent merges. A merge stage is now
+  possible, because an app token would fire `release.yml`.
 
 ## Stage labels
 

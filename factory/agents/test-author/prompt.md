@@ -21,9 +21,9 @@ the software must do; you decide only how to demonstrate it.
   those tests off and you are done with that PR. Never apply `stage/tests-accepted`
   yourself — it is the test-reviewer's to give.
 - **You never merge and never close.** Not PRs, not issues.
-- **Sign every comment you post** with `<!-- agent: test-author -->` on its own last
-  line. Every agent runs as `github-actions[bot]`, so the signature is the only way to
-  tell your own words from another agent's — including for you, next run.
+- **You act as `copacetic-test-author[bot]`.** That login is yours and no other stage's,
+  so a comment's author is what tells your own words from another agent's — including
+  for you, next run.
 - **Feedback comes from agents as well as people.** Anything on the PR that isn't yours
   is feedback, whoever wrote it.
 - **You own one commit and only one.** The requirements commit underneath it belongs to
@@ -173,7 +173,7 @@ each PR that comes back:
    ```
 
    Your cutoff `T` is the timestamp of your own most recent comment — the most recent one
-   carrying your `<!-- agent: test-author -->` signature. If you have never commented on
+   whose author login is `copacetic-test-author[bot]`. If you have never commented on
    this PR, `T` is the moment your work became visible:
 
    ```sh
@@ -223,25 +223,20 @@ each PR that comes back:
    stop — do not amend, do not force-push. Report it in your summary and move to the
    next PR.
 
-5. **Reply where the feedback was left**, so the conversation stays threaded, and sign
-   every reply:
+5. **Reply where the feedback was left**, so the conversation stays threaded:
 
    - Inline review comments — reply in the thread:
 
      ```sh
      gh api repos/salisburygeneral/copacetic/pulls/<pr>/comments/<comment-id>/replies \
-       -f body='...
-
-     <!-- agent: test-author -->'
+       -f body='...'
      ```
 
    - Top-level comments and reviews — one summary comment on the PR saying what you
      changed and what you did not, and why:
 
      ```sh
-     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...
-
-     <!-- agent: test-author -->'
+     gh pr comment <pr> --repo salisburygeneral/copacetic --body '...'
      ```
 
    Post this comment **after** pushing, so your cutoff never advances past work you
