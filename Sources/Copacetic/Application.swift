@@ -4,27 +4,25 @@ public struct Application: Sendable {
         case offline
     }
 
+    private var isRunning: Bool
+
     public var screen: Screen {
-        fatalError("unimplemented")
+        isRunning ? .greeting : .blank
     }
 
     public init(connectivity: Connectivity = .online) {
-        fatalError("unimplemented")
+        self.isRunning = false
     }
 
     public mutating func launch() {
-        fatalError("unimplemented")
+        isRunning = true
     }
 
     public mutating func close() {
-        fatalError("unimplemented")
+        isRunning = false
     }
 
-    public mutating func sendToBackground(for duration: Duration) {
-        fatalError("unimplemented")
-    }
+    public mutating func sendToBackground(for duration: Duration) {}
 
-    public mutating func bringToForeground() {
-        fatalError("unimplemented")
-    }
+    public mutating func bringToForeground() {}
 }
