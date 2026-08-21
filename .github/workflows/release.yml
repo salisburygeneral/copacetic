@@ -1,0 +1,90 @@
+name: release
+
+# Ships the app to TestFlight on every merge. Not a factory stage: no agent, no prompt.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    env:
+      BUNDLE_ID: ${{ secrets.APP_BUNDLE_ID }}
+      ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the app identity is configured
+        run: |
+          for v in BUNDLE_ID ISSUER_ID KEY_ID TEAM_ID; do
+            [ -n "${!v}" ] || { echo "$v is empty — add the secret"; exit 1; }
+          done
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run the tests
+        run: make test
+
+      - name: Generate the project
+        run: xcodegen generate --spec App/project.yml
+
+      - name: Write the App Store Connect key
+        env:
+          PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/private_keys"
+          printf '%s' "$PRIVATE_KEY" > "$HOME/private_keys/AuthKey_$KEY_ID.p8"
+
+      - name: Write the export options
+        run: |
+          cat > /tmp/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project App/Copacetic.xcodeproj \
+            -scheme Copacetic \
+            -destination 'generic/platform=iOS' \
+            -archivePath /tmp/Copacetic.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_$KEY_ID.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }}
+
+      - name: Upload to TestFlight
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath /tmp/Copacetic.xcarchive \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath /tmp/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_$KEY_ID.p8" \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID"

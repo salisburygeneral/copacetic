@@ -8,8 +8,18 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
 
+    env:
+      BUNDLE_ID: ${{ secrets.APP_BUNDLE_ID }}
+      TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
       - name: Run the tests
         run: make test
+
+      - name: Build the app
+        run: make build

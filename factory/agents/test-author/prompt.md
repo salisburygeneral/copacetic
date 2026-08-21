@@ -88,10 +88,12 @@ and nothing beyond it:
   bodies. Types, properties and method signatures only. No logic, no defaults, no
   behaviour that could accidentally make a test pass. Where a stub already exists, extend
   it rather than declaring a second one.
-- **Create `Package.swift` if it is absent** — tools version 6.0, library target
-  `Copacetic`, test target `AcceptanceTests`, no dependencies. Swift Testing ships with
-  the toolchain. Where it already exists, add nothing to it but what your own target
-  needs; the other targets in it belong to other stages.
+- **Create `Package.swift` if it is absent** — tools version 6.0,
+  `platforms: [.macOS(.v14), .iOS(.v17)]`, library target `Copacetic`, test target
+  `AcceptanceTests`, no dependencies. Swift Testing ships with the toolchain. There is no
+  target for the app: `App/` is an Xcode project and SwiftPM never builds it. Where
+  `Package.swift` already exists, add nothing to it but what your own target needs; the
+  other targets in it belong to other stages.
 - **`make test` must build.** Failing assertions are the expected result; a build error
   is a different thing entirely and is yours to fix before you commit. A test that passes
   the moment you write it is worth a second look — usually it means you have tested

@@ -63,22 +63,34 @@ add whatever further types the implementation needs.
 - **No third-party dependencies.** The toolchain is enough. A `Package.swift` that fetches
   anything is a decision for a human, not for you.
 
-### The app shell
+### The iPhone app
 
-`Sources/CopaceticApp/` is the SwiftUI app: the screens through which a person uses the
-library. Create the target when you first need it, depending on `Copacetic`.
+`App/` is the app. `App/Sources/` holds the SwiftUI screens through which a person uses
+the library, and the rest of the directory is the Xcode project that wraps them. Create
+what is absent, and nothing beyond it.
 
-- **The shell holds no logic.** Every decision, calculation and piece of stored state
+- **`App/Sources/` holds no logic.** Every decision, calculation and piece of stored state
   lives in `Copacetic`; the views read it and call it, and do nothing else. Nothing tests
-  this target, so anything you put here is untested by construction.
+  `App/Sources/`, so anything you put there is untested by construction.
 - **Present what the tests demonstrate, and nothing more.** No screen for a feature nobody
   has asked for, no settings, no placeholder navigation.
-- **It must compile on the runner**, which builds for macOS. Plain SwiftUI only — no
-  `UIKit`, no iOS-only modifiers. When you create the target, add
-  `platforms: [.iOS(.v17), .macOS(.v14)]` to `Package.swift`; SwiftUI needs it and the
-  package has no platforms line yet.
-- **There is no Xcode project and you do not create one.** Wrapping this target in a real
-  iPhone app is a later stage's work.
+- **Create `App/project.yml` if it is absent** — an XcodeGen spec with one iOS app target
+  named `Copacetic` and a shared scheme of the same name, deployment target iOS 17,
+  sources `App/Sources` and `App/Assets.xcassets`, `App/Info.plist` as its
+  `INFOPLIST_FILE`, and a dependency on the root package's `Copacetic` product. The
+  `@main` struct goes in `App/Sources/`.
+- **Never write the identity into the spec.** Its settings carry
+  `PRODUCT_BUNDLE_IDENTIFIER: ${BUNDLE_ID}` and `DEVELOPMENT_TEAM: ${TEAM_ID}`, which
+  XcodeGen substitutes from the environment. The repo is public, so a literal there leaks
+  it. `App/Info.plist` sets `CFBundleVersion` to `$(CURRENT_PROJECT_VERSION)`, which the
+  release overrides with its run number.
+- **Create the app icon if it is absent** — one 1024×1024 PNG in
+  `App/Assets.xcassets/AppIcon.appiconset/`. Draw it with Core Graphics in a throwaway
+  script and commit the PNG alone. **The image must be opaque.** App Store Connect rejects
+  an icon that carries an alpha channel.
+- **`App/Info.plist` is the one part that follows features.** A feature that needs a
+  permission needs its usage string there, or the app crashes on the phone and no test
+  catches it.
 
 ### The unit tests
 
@@ -98,8 +110,9 @@ one per type.
 
 - **`make test` must pass** — every acceptance test and every unit test. That is the whole
   bar for this stage, and it is not met until the run is green.
-- **`swift build` must succeed too.** Nothing in the test run reaches the app shell, so
-  this is the only thing that compiles it.
+- **`make build` must succeed too.** It generates the Xcode project and builds it for the
+  iOS simulator. `App/` is not part of the Swift package, so `make test` never compiles
+  it and a mistake there shows up nowhere else.
 - **If `make test` passes before you have written anything**, the tests are not
   discriminating. Don't take the pass. Say so on the PR, leave the label off, and move on.
 - **If a test cannot be satisfied** — it contradicts another, or it demands something no
@@ -134,13 +147,13 @@ Work through them in ascending PR number order:
 2. **Read the tests.** `Tests/AcceptanceTests/NNN-*.swift`, together with the stubs in
    `Sources/Copacetic/` that they reach for, is the whole of what you have to satisfy.
 
-3. **Write the code**, then run `make test` and `swift build`. Both must succeed.
+3. **Write the code**, then run `make test` and `make build`. Both must succeed.
 
 4. **Commit once, on top of what is already there.** Do not amend, rebase or reorder the
    commits below yours:
 
    ```sh
-   git add Package.swift Sources Tests/UnitTests
+   git add Package.swift Sources App Tests/UnitTests
    git commit -m "Implement #NNN: <issue title>"
    git push
    ```
@@ -203,7 +216,7 @@ each PR that comes back:
    - If it is a remark between others that needs nothing from you, leave it alone.
 
    Feedback that asks for behaviour the tests don't demonstrate belongs to an earlier
-   stage. Say so, and leave the code alone. `make test` and `swift build` must still pass
+   stage. Say so, and leave the code alone. `make test` and `make build` must still pass
    when you are done, whatever was asked for.
 
 4. **Amend your commit — never add a second one.** You contribute exactly one commit: the
@@ -214,8 +227,8 @@ each PR that comes back:
    git fetch origin <head-branch>
    git switch -C <head-branch> origin/<head-branch>
    git log -1 --format='%an %s'
-   # ...edit the code, then `make test` and `swift build`...
-   git add Package.swift Sources Tests/UnitTests
+   # ...edit the code, then `make test` and `make build`...
+   git add Package.swift Sources App Tests/UnitTests
    git commit --amend --no-edit
    git push --force-with-lease
    ```
